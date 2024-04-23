@@ -14,13 +14,19 @@ public class EnemyPawn : MonoBehaviour
     public float visionAngle = 70.0f;
 
     public bool debugDraw = false;
+    public Vector3 movementVectorUpdated;
 
-    void Update()
+    void FixedUpdate()
     {
-        Vector3 movementVector = CalculateMovementVector();
+        UpdatePosition();
+    }
+
+    public void UpdatePosition()
+    {
+        movementVectorUpdated = CalculateMovementVector();
 
         // Apply movement
-        transform.forward = Vector3.Lerp(transform.forward, movementVector.normalized, Time.deltaTime * rotationSpeed);
+        transform.forward = Vector3.Lerp(transform.forward, movementVectorUpdated.normalized, Time.deltaTime * rotationSpeed);
         transform.position += transform.forward * movementSpeed * Time.deltaTime;
 
         ResolveCollisions();

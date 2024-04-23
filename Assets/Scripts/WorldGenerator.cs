@@ -15,6 +15,10 @@ public class WorldGenerator : MonoBehaviour
     public int height = 200;
     public float percentageBlocks = 0.35f;
     public float noiseScale = 15.0f;
+    private int fixedFrameCounter = 0;
+
+    // Frequency at which to call the function
+    public int callFrequency = 60;
 
     [Header("Materials")]
     public Material planeMaterial;
@@ -24,7 +28,10 @@ public class WorldGenerator : MonoBehaviour
     public GameObject pawnDirectoryInstance; 
     public GameObject AIPrefab; //objectToPool
     public int numAI = 500; //amountToPool
-
+    
+    public GameObject player;
+    private EnemyPawn updatedEnemyPawn;
+    
     private Vector3 v3pos;
     
     void Awake()
@@ -49,7 +56,23 @@ public class WorldGenerator : MonoBehaviour
 
     private void FixedUpdate()
     {
+        fixedFrameCounter++;
 
+        if (fixedFrameCounter % callFrequency != 0) return;
+        
+        foreach (GameObject enemy in pooledObjects)
+        {
+            float distance = Vector3.Distance(player.transform.position, enemy.transform.position);
+            if (Mathf.Abs(distance) <= 50f)
+            {
+                enemy.SetActive(true);
+            }
+            else
+            {
+                enemy.SetActive(false);
+                enemy.GetComponent<EnemyPawn>().UpdatePosition();
+            }
+        }
     }
 
     public GameObject GetPooledObject()
@@ -146,7 +169,7 @@ public class WorldGenerator : MonoBehaviour
                 pawn.transform.SetParent(pawnDirectoryInstance.transform);
                 pawn.transform.position = samplePos;
                 pawn.transform.rotation = rotation;
-                pawn.SetActive(true); 
+                pawn.SetActive(true);
             }
         }
         
