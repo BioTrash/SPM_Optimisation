@@ -2,10 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Object = System.Object;
 using Random = UnityEngine.Random;
 
 public class WorldGenerator : MonoBehaviour
 {
+    public static WorldGenerator SharedInstance;
+    public List<GameObject> pooledObjects;
+    
     [Header("World")]
     public int width = 200;
     public int height = 200;
@@ -17,25 +21,48 @@ public class WorldGenerator : MonoBehaviour
     public Material obstacleMaterial;
 
     [Header("AI")]
-    public GameObject pawnDirectoryInstance;
-    public GameObject AIPrefab;
-    public int numAI = 500;
+    public GameObject pawnDirectoryInstance; 
+    public GameObject AIPrefab; //objectToPool
+    public int numAI = 500; //amountToPool
 
     private Vector3 v3pos;
-
     
     void Awake()
     {
+        SharedInstance = this;
+        //PlaceAI();
+    }
+
+    void Start()
+    {
+        pooledObjects = new List<GameObject>();
+        GameObject tmp;
+        for (int i = 0; i < numAI; i++)
+        {
+            tmp = Instantiate(AIPrefab);
+            tmp.SetActive(false);
+            pooledObjects.Add(tmp);
+        }
+        
         PlaceAI();
     }
 
     private void FixedUpdate()
     {
-        /*
-         *Spawn Enemies only without player view port + a certain distance
-         *  - Spawn enemies based on placementChance variable
-         *Destroy enemies that are without player view port + a certain distance
-         */
+
+    }
+
+    public GameObject GetPooledObject()
+    {
+        for (int i = 0; i < numAI; i++)
+        {
+            if (!pooledObjects[i].activeInHierarchy)
+            {
+                return pooledObjects[i];
+            }
+        }
+
+        return null;
     }
 
     [ContextMenu("Generate New World")]
@@ -98,27 +125,28 @@ public class WorldGenerator : MonoBehaviour
         var stopwatch = new System.Diagnostics.Stopwatch();
         stopwatch.Start();
 
-        int placed = 0;
+        //float placementChance = numAI / ((1.0f - percentageBlocks) * ((width - 2) * (height - 2)));
 
-        float placementChance = numAI / ((1.0f - percentageBlocks) * ((width - 2) * (height - 2)));
-
-        while (placed < numAI)
+        foreach(GameObject pawn in pooledObjects)
         {
-            float x = Random.Range(1, width);
-            float y = Random.Range(0, height);
-
-            Vector3 samplePos = new Vector3(x, AIPrefab.GetComponent<CapsuleCollider>().height * 0.5f, y);
-            Vector3 point1 = samplePos + AIPrefab.GetComponent<CapsuleCollider>().height * 0.5f * Vector3.up;
+            /*Vector3 point1 = samplePos + AIPrefab.GetComponent<CapsuleCollider>().height * 0.5f * Vector3.up;
             Vector3 point2 = samplePos - AIPrefab.GetComponent<CapsuleCollider>().height * 0.5f * Vector3.up;
             float radius = AIPrefab.GetComponent<CapsuleCollider>().radius;
 
-            Collider[] colliders = Physics.OverlapCapsule(point1, point1, radius);
-            if (colliders.Length == 0)
+            Collider[] colliders = Physics.OverlapCapsule(point1, point1, radius);*/
+            
+            if (pawn)
             {
+                float x = Random.Range(0, width);
+                float y = Random.Range(0, height);
+
+                Vector3 samplePos = new Vector3(x, AIPrefab.GetComponent<CapsuleCollider>().height * 0.5f, y);
                 Quaternion rotation = Quaternion.AngleAxis(Random.value * 360.0f, Vector3.up);
-                GameObject pawn = GameObject.Instantiate(AIPrefab, samplePos, rotation);
+                
                 pawn.transform.SetParent(pawnDirectoryInstance.transform);
-                placed++;
+                pawn.transform.position = samplePos;
+                pawn.transform.rotation = rotation;
+                pawn.SetActive(true); 
             }
         }
         
