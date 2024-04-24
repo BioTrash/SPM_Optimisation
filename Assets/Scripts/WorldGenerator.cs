@@ -9,6 +9,7 @@ public class WorldGenerator : MonoBehaviour
 {
     public static WorldGenerator SharedInstance;
     public List<GameObject> pooledObjects;
+    public HashSet<Vector2> noiseList;
     
     [Header("World")]
     public int width = 200;
@@ -16,6 +17,7 @@ public class WorldGenerator : MonoBehaviour
     public float percentageBlocks = 0.35f;
     public float noiseScale = 15.0f;
     private int fixedFrameCounter = 0;
+    public float sample = 0.0f;
 
     // Frequency at which to call the function
     public int callFrequency = 60;
@@ -36,19 +38,46 @@ public class WorldGenerator : MonoBehaviour
     
     void Awake()
     {
+        noiseList = new HashSet<Vector2>();
         SharedInstance = this;
-        //PlaceAI();
     }
 
     void Start()
-    {
+    {   
         pooledObjects = new List<GameObject>();
         GameObject tmp;
         for (int i = 0; i < numAI; i++)
         {
+            if (i == 1)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        sample = 0.0f;
+                        
+                        if (x > 0 && y > 0 && x < width - 1 && y < height - 1)
+                        {
+                            sample = Mathf.PerlinNoise((float)x / width * noiseScale, (float)y / height * noiseScale);
+                        }
+
+                        if (sample < percentageBlocks)
+                        {
+                            noiseList.Add(new Vector2(x, y));
+                        }
+                    }
+                }
+            }
+            
             tmp = Instantiate(AIPrefab);
             tmp.SetActive(false);
+            tmp.GetComponent<EnemyPawn>().sharedInstance = SharedInstance;
             pooledObjects.Add(tmp);
+        }
+        
+        foreach (Vector2 obstacle in noiseList)
+        {
+            Debug.Log(obstacle);
         }
         
         PlaceAI();
@@ -63,7 +92,7 @@ public class WorldGenerator : MonoBehaviour
         foreach (GameObject enemy in pooledObjects)
         {
             float distance = Vector3.Distance(player.transform.position, enemy.transform.position);
-            if (Mathf.Abs(distance) <= 50f)
+            if (Mathf.Abs(distance) <= 50.0f)
             {
                 enemy.SetActive(true);
             }
@@ -116,7 +145,7 @@ public class WorldGenerator : MonoBehaviour
         {
             for (int x = 0; x < width; x++)
             {
-                float sample = 0.0f;
+                sample = 0.0f;
                 // NOTE: Add a solid border and generate inside with perlin noise.
                 if (x > 0 && y > 0 && x < width - 1 && y < height - 1)
                 {
@@ -125,9 +154,9 @@ public class WorldGenerator : MonoBehaviour
 
                 if (sample < percentageBlocks)
                 {
+                    //noiseList.Add(new Vector2(x, y)); //adds an obstacle placement vector2 in the list
                     // NOTE: Larger noice gives higher blocks.
                     float obstacleHeight = 3.0f - sample * 2.0f;
-
                     GameObject obstacle = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     obstacle.transform.position = new Vector3(x, obstacleHeight * 0.5f, y);
                     obstacle.transform.localScale = new Vector3(1.0f, obstacleHeight, 1.0f);
@@ -137,9 +166,12 @@ public class WorldGenerator : MonoBehaviour
             }
         }
 
+
+
         // Logging 
         stopwatch.Stop();
         Debug.LogFormat("[WorldGenerator::BuildWorld] Execution time: {0}ms", stopwatch.ElapsedMilliseconds);
+        
     }
 
     void PlaceAI()
@@ -147,7 +179,7 @@ public class WorldGenerator : MonoBehaviour
         // Log execution time.
         var stopwatch = new System.Diagnostics.Stopwatch();
         stopwatch.Start();
-
+        
         //float placementChance = numAI / ((1.0f - percentageBlocks) * ((width - 2) * (height - 2)));
 
         foreach(GameObject pawn in pooledObjects)

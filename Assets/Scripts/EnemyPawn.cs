@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,6 +16,12 @@ public class EnemyPawn : MonoBehaviour
 
     public bool debugDraw = false;
     public Vector3 movementVectorUpdated;
+    public WorldGenerator sharedInstance;
+
+    private void Start()
+    {
+
+    }
 
     void FixedUpdate()
     {
@@ -29,49 +36,64 @@ public class EnemyPawn : MonoBehaviour
         transform.forward = Vector3.Lerp(transform.forward, movementVectorUpdated.normalized, Time.deltaTime * rotationSpeed);
         transform.position += transform.forward * movementSpeed * Time.deltaTime;
 
-        ResolveCollisions();
+        //ResolveCollisions();
     }
 
     public Vector3 CalculateMovementVector()
     {
         Vector3 movementVector = Vector3.zero;
 
-        // Create movement vector based on lidar sight.
+        //Create movement vector based on lidar sight.
         for (int i = 0; i < traces; i++)
         {
             float stepAngle = (visionAngle * 2.0f) / (traces - 1);
             float angle = (90.0f + visionAngle - (i * stepAngle)) * Mathf.Deg2Rad;
             Vector3 direction = transform.TransformDirection(new Vector3(Mathf.Cos(angle), 0.0f, Mathf.Sin(angle)));
             
-            if (Physics.Raycast(transform.position, direction, out RaycastHit hitInfo, sight))
+            Vector2 enemyPosition = new Vector2(Mathf.Round(transform.position.x), Mathf.Round(transform.position.z));
+            
+            if (sharedInstance.noiseList.Contains(enemyPosition))
             {
-                movementVector += direction * hitInfo.distance;
-
-                if (debugDraw)
-                {
-                    Debug.DrawLine(transform.position, transform.position + direction * hitInfo.distance);
-
-                    Vector3 Perp = Vector3.Cross(direction, Vector3.up);
-                    Debug.DrawLine(hitInfo.point + Perp, hitInfo.point - Perp, Color.red);
-                }
-
-                if (hitInfo.transform.GetComponent<Player>())
-                {
-                    movementVector = direction;
-                    break;
-                }
+                movementVector = -direction * sight;
+                Debug.Log("Direction should change right about now");
             }
             else
             {
                 movementVector += direction * sight;
-
-                if (debugDraw)
-                {
-                    Debug.DrawLine(transform.position, transform.position + direction * sight);
-                }
+                
             }
+            
+            
+            
+            // if (Physics.Raycast(transform.position, direction, out RaycastHit hitInfo, sight))
+            // {
+            //     movementVector += direction * hitInfo.distance;
+            //
+            //     if (debugDraw)
+            //     {
+            //         Debug.DrawLine(transform.position, transform.position + direction * hitInfo.distance);
+            //
+            //         Vector3 Perp = Vector3.Cross(direction, Vector3.up);
+            //         Debug.DrawLine(hitInfo.point + Perp, hitInfo.point - Perp, Color.red);
+            //     }
+            //
+            //     if (hitInfo.transform.GetComponent<Player>())
+            //     {
+            //         movementVector = direction;
+            //         break;
+            //     }
+            // }
+            // else
+            // {
+            //     movementVector += direction * sight;
+            //
+            //     if (debugDraw)
+            //     {
+            //         Debug.DrawLine(transform.position, transform.position + direction * sight);
+            //     }
+            // }
         }
-
+        
         return movementVector;
     }
 

@@ -109,10 +109,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6207db8574870554b9192996f7f56e6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movementSpeed: 20
+  movementSpeed: 5
   rotationSpeed: 4
   sight: 400
   traces: 7
   visionAngle: 70
   debugDraw: 1
   movementVectorUpdated: {x: 0, y: 0, z: 0}
+  sharedInstance: {fileID: 0}
