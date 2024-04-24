@@ -17,6 +17,7 @@ public class EnemyPawn : MonoBehaviour
     public bool debugDraw = false;
     public Vector3 movementVectorUpdated;
     public WorldGenerator sharedInstance;
+    public float areaSize = 1f;
 
     private void Start()
     {
@@ -46,25 +47,51 @@ public class EnemyPawn : MonoBehaviour
         //Create movement vector based on lidar sight.
         for (int i = 0; i < traces; i++)
         {
+
+
             float stepAngle = (visionAngle * 2.0f) / (traces - 1);
             float angle = (90.0f + visionAngle - (i * stepAngle)) * Mathf.Deg2Rad;
             Vector3 direction = transform.TransformDirection(new Vector3(Mathf.Cos(angle), 0.0f, Mathf.Sin(angle)));
-            
+
             Vector2 enemyPosition = new Vector2(Mathf.Round(transform.position.x), Mathf.Round(transform.position.z));
             
-            if (sharedInstance.noiseList.Contains(enemyPosition))
+            int startX = Mathf.Max(0, Mathf.FloorToInt(enemyPosition.x - areaSize / 2));
+            int startY = Mathf.Max(0, Mathf.FloorToInt(enemyPosition.y - areaSize / 2));
+            int endX = Mathf.Min(sharedInstance.width, Mathf.CeilToInt(enemyPosition.x + areaSize / 2));
+            int endY = Mathf.Min(sharedInstance.height, Mathf.CeilToInt(enemyPosition.y + areaSize / 2));
+
+            for (int y = startY; y < endY; y++)
             {
-                movementVector = -direction * sight;
-                Debug.Log("Direction should change right about now");
+                for (int x = startX; x < endX; x++)
+                {
+                    float sample = Mathf.PerlinNoise((float)x / sharedInstance.width * sharedInstance.noiseScale, (float)y / sharedInstance.height * sharedInstance.noiseScale);
+
+                    if (sample < sharedInstance.percentageBlocks)
+                    {
+                        //Debug.Log("Direction should change right about now");
+                        movementVector = -direction * sight;
+                    }
+                    else
+                    {
+                        movementVector += direction * sight;
+                    }
+                }
             }
-            else
-            {
-                movementVector += direction * sight;
-                
-            }
-            
-            
-            
+
+            // if (sharedInstance.noiseList.Contains(enemyPosition))
+            // {
+            //     movementVector = -direction * sight;
+            //     Debug.Log("Direction should change right about now");
+            // }
+            // else
+            // {
+            //     movementVector += direction * sight;
+            //
+            // }
+
+
+
+
             // if (Physics.Raycast(transform.position, direction, out RaycastHit hitInfo, sight))
             // {
             //     movementVector += direction * hitInfo.distance;
@@ -93,7 +120,7 @@ public class EnemyPawn : MonoBehaviour
             //     }
             // }
         }
-        
+
         return movementVector;
     }
 

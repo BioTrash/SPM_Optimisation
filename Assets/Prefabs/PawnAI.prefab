@@ -110,10 +110,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   movementSpeed: 5
-  rotationSpeed: 4
+  rotationSpeed: 10
   sight: 400
   traces: 7
   visionAngle: 70
   debugDraw: 1
   movementVectorUpdated: {x: 0, y: 0, z: 0}
   sharedInstance: {fileID: 0}
+  areaSize: 0.2

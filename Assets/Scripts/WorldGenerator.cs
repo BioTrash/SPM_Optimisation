@@ -149,6 +149,7 @@ public class WorldGenerator : MonoBehaviour
                 // NOTE: Add a solid border and generate inside with perlin noise.
                 if (x > 0 && y > 0 && x < width - 1 && y < height - 1)
                 {
+                    // TIP: Detta uträkningen är mindre resurskrävadne än att kolla igenom en kollektion. Försök att göra den här uträkningen på varje fiende men låte den kolla endast position runt om sig, säg 20.0f runt om sig
                     sample = Mathf.PerlinNoise((float)x / width * noiseScale, (float)y / height * noiseScale);
                 }
 
