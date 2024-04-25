@@ -36,6 +36,7 @@ public class WorldGenerator : MonoBehaviour
     
     public GameObject player;
     private EnemyPawn updatedEnemyPawn;
+    private int startChunk;
     
     private Vector3 v3pos;
     
@@ -49,9 +50,6 @@ public class WorldGenerator : MonoBehaviour
 
     void Start()
     {
-        HashSet<GameObject> tempSet = new HashSet<GameObject>();
-        int currentChunkIndex = 1; // Start with key 1
-        
         // Iterate through the obstaclePool and group elements into chunks
         foreach (GameObject obstacle in obstaclePool)
         {
@@ -70,23 +68,6 @@ public class WorldGenerator : MonoBehaviour
         }
 
         Debug.Log(chunkPool.Count);
-        
-        // Retrieve all elements with the same key
-        HashSet<GameObject> retrievedElements = chunkPool[1];
-
-        // Do something with the retrieved elements
-        foreach (GameObject element in retrievedElements)
-        {
-           element.SetActive(false);
-        }
-        
-        HashSet<GameObject> retrievedElements6 = chunkPool[6];
-
-        // Do something with the retrieved elements
-        foreach (GameObject element in retrievedElements6)
-        {
-            element.SetActive(false);
-        }
         
         GameObject tmp;
         for (int i = 0; i < numAI; i++)
@@ -120,6 +101,8 @@ public class WorldGenerator : MonoBehaviour
         }
         
         PlaceAI();
+
+        startChunk = PlayerChunk();
     }
 
     private void FixedUpdate()
@@ -141,19 +124,33 @@ public class WorldGenerator : MonoBehaviour
                 enemy.GetComponent<EnemyPawn>().UpdatePosition();
             }
         }
+  
+        
+
+        if (PlayerChunk() != startChunk)
+        {
+            HashSet<GameObject> retrievedElements = chunkPool[startChunk];
+            HashSet<GameObject> newRetrievedElements = chunkPool[PlayerChunk()];
+            
+            foreach (GameObject element in retrievedElements)
+            {
+                element.SetActive(false);
+            }  
+            
+            foreach (GameObject element in newRetrievedElements)
+            {
+                element.SetActive(true);
+            }
+
+            startChunk = PlayerChunk();
+        }
     }
 
-    public GameObject GetPooledObject()
+    private int PlayerChunk()
     {
-        for (int i = 0; i < numAI; i++)
-        {
-            if (!pooledObjects[i].activeInHierarchy)
-            {
-                return pooledObjects[i];
-            }
-        }
-
-        return null;
+        int chunkX = (int)(player.transform.position.x / chunkSize) + 1;
+        int chunkZ = (int)(player.transform.position.z / chunkSize) + 1;
+        return (chunkZ - 1) * (width / chunkSize) + chunkX;
     }
 
     [ContextMenu("Generate New World")]
@@ -223,7 +220,7 @@ public class WorldGenerator : MonoBehaviour
                     obstacle.transform.localScale = new Vector3(1.0f, obstacleHeight, 1.0f);
                     obstacle.transform.SetParent(transform);
                     obstacle.GetComponent<Renderer>().material = obstacleMaterial;
-                    
+                    obstacle.SetActive(false);
                     obstaclePool.Add(obstacle);
                 }
             }
