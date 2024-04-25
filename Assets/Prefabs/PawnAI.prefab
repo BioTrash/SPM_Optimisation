@@ -117,4 +117,4 @@ MonoBehaviour:
   debugDraw: 1
   movementVectorUpdated: {x: 0, y: 0, z: 0}
   sharedInstance: {fileID: 0}
-  areaSize: 0.2
+  areaSize: 1
